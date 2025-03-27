@@ -33,7 +33,7 @@ const users =[
 ]
 
 
-const typeDefs = gql`
+const typeDefs = gql
 type Book {
    id: Int
    title: String
@@ -50,9 +50,9 @@ type User {
    books: [Book]
    users: [User]   
 }
-`;
+;
 
-// This definr how to fetch the deta from the field in the schema
+// This define how to fetch the deta from the field in the schema
 // test as key and fetch array books with using definistion, Book
 const resolvers ={
     Query :{
