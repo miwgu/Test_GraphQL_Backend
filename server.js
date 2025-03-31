@@ -1,75 +1,49 @@
-const { ApolloServer, gql} = require ("apollo-server");
+require('dotenv').config(); // To load the environment variables from .env file!
 
+const { ApolloServer, gql } = require("apollo-server");
+//const mongoose = require("mongoose");
+//const Book = require("./models/Book");
+//const User = require("./models/User");
+//const { generateToken } = require("./auth/auth");
+const bookResolvers = require("./src/resolvers/bookResolvers");
+const userResolvers = require("./src/resolvers/userResolvers");
+const bookSchema = require("./src/schemas/bookSchema");
+const userSchema = require("./src/schemas/userSchema");
+const authenticateToken = require('./src/auth/auth'); 
 
-const books =[
- {
-    id:1 ,
-    title: "博士の愛した数式",
-    author:"小川洋子",
- },
- {
-    id:2 ,
-    title: "ジョゼと虎と魚たち",
-    author:"田辺聖子",
- },
-];
+const connectDB = require("./src/config/db");
+// Connect to the database
+connectDB();
 
-const users =[
- {
-    id:1,
-    firstname: "優香",
-    lastname: "本田",
-    email:"yuuka@example.com",
-    favorit_id:1,
- },
- {
-    id:2,
-    firstname: "明美",
-    lastname: "豊田",
-    email:"akemi@example.com",
-    favorit_id:2,
- },
-
-]
-
-
-const typeDefs = gql
-type Book {
-   id: Int
-   title: String
-   author: String
-}
-type User {
-   id: Int
-   firstname: String
-   lastname: String
-   email:String
-   favoritBook: Book
-}
-   type Query {
-   books: [Book]
-   users: [User]   
-}
-;
-
-// This define how to fetch the deta from the field in the schema
-// test as key and fetch array books with using definistion, Book
-const resolvers ={
-    Query :{
-        books : ()=> books,
-        users : ()=>users,
-    },
-    User:{
-        favoritBook:(parent) => books.find(book => book.id === parent.favorit_id ),
-    },
-}
-
+// Apollo Server Setup
 const server = new ApolloServer({
-
-    typeDefs,
-    resolvers,
+  typeDefs: [bookSchema, userSchema],
+  resolvers: { 
+    Query: { 
+      ...bookResolvers.Query, 
+      ...userResolvers.Query 
+    }, 
+    Mutation: { 
+      ...bookResolvers.Mutation, 
+      ...userResolvers.Mutation 
+    } 
+  },
+  context: ({ req }) => {
+    const token = req.headers.authorization || "";
+    let user = null;
+    
+    if(token){
+      try{
+        user = authenticateToken(token.replace("Bearer ", ""));
+      } catch (err){
+        console.error('Token verification failed:', err);
+      }
+    }
+    
+    return { user };
+  },
 });
 
-server.listen().then(({url})=>{
-    console.log(`Server ready at ${url}`);
-})
+server.listen().then(({ url }) => {
+  console.log(`Server running at ${url}`);
+});
