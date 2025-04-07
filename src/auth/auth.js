@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken');
 
 // Secret key for JWT verification, should be stored in an environment variable
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET ;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET is not defined in your environment variables");
+}
 
 // Function to authenticate the token
 const authenticateToken = (token) => {

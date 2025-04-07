@@ -15,6 +15,15 @@ const bookSchema = gql`
     books: [Book]
     book(id: ID!): Book  # Fetch a single book b
   }
+  
+  type BrokenFavoritesReport {
+  username: String!
+  brokenFavorites: [String!]!
+}
+
+extend type Query {
+  checkFavoritesValidity: [BrokenFavoritesReport!]!
+}
 
   type Mutation {
    createBook(

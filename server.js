@@ -1,10 +1,8 @@
 require('dotenv').config(); // To load the environment variables from .env file!
 
-const { ApolloServer, gql } = require("apollo-server");
-//const mongoose = require("mongoose");
-//const Book = require("./models/Book");
-//const User = require("./models/User");
-//const { generateToken } = require("./auth/auth");
+const { ApolloServer } = require("apollo-server");
+//const { mergeTypeDefs } = require('@graphql-tools/merge');
+//const { mergeResolvers } = require('@graphql-tools/merge');
 const bookResolvers = require("./src/resolvers/bookResolvers");
 const userResolvers = require("./src/resolvers/userResolvers");
 const bookSchema = require("./src/schemas/bookSchema");
@@ -15,10 +13,16 @@ const connectDB = require("./src/config/db");
 // Connect to the database
 connectDB();
 
+// Merge schemas and resolvers
+//const typeDefs = mergeTypeDefs([userSchema, bookSchema]);
+//const resolvers = mergeResolvers([userResolvers, bookResolvers]);
+
 // Apollo Server Setup
 const server = new ApolloServer({
   typeDefs: [bookSchema, userSchema],
-  resolvers: { 
+  //typeDefs,
+  //resolvers,
+   resolvers: { 
     Query: { 
       ...bookResolvers.Query, 
       ...userResolvers.Query 
@@ -26,8 +30,9 @@ const server = new ApolloServer({
     Mutation: { 
       ...bookResolvers.Mutation, 
       ...userResolvers.Mutation 
-    } 
-  },
+    },
+    /* User: { ...userResolvers.User },  */ 
+  }, 
   context: ({ req }) => {
     const token = req.headers.authorization || "";
     let user = null;

@@ -1,8 +1,26 @@
 const bcrypt = require("bcryptjs");
 const generateToken = require("../auth/generateToken");
 const User = require("../models/User");
+const Book = require("../models/Book"); 
+const mongoose = require('mongoose');
 
 const userResolvers = {
+  User:{
+    favorites: async (parent) => {
+      // Fetch the books based on the favorites array of the user
+      const favoriteBooks = await Book.find({ _id: { $in: parent.favorites } });
+
+      console.log("Mapped Favorites:", favoriteBooks);
+
+      // Convert the ObjectId to a string for GraphQL to handle
+      return favoriteBooks.map(book => {
+        return {
+          ...book.toObject(),   // Convert to plain object
+          id: book._id.toString()  // Ensure the id field is returned as string
+        };
+      });
+    }   
+  },
   Query: {
     /**
      * Fetch all users if the authenticated user is an ADMIN.
@@ -22,14 +40,48 @@ const userResolvers = {
         return new Error("Access denied. You are not Admin");
       }
 
-      return await User.find(); // Fetch all users if role is ADMIN
+      const users = await User.find().populate("favorites");
+      return users.map(user => ({
+        ...user.toObject(),
+        favorites: user.favorites.map(book => book.toObject())
+      }));
+
+      //return await User.find(); // Fetch all users if role is ADMIN
     },
     me: async (_, __, { user }) => {
       if (!user) {
         throw new Error("Authentication required");
       }
-      return user; // Return user data from the context
+      const foundUser = await User.findById(user.id).populate("favorites")
+      
+      return {
+        ...foundUser.toObject(),
+        favorites: foundUser.favorites.map(book => ({
+          ...book.toObject(),
+        })),
+      };
+      //return user; // Return user data from the context
     },
+  /**
+   * check 
+   */
+  checkFavoritesValidity: async () => {
+    const users = await User.find();
+    const books = await Book.find();
+    const bookIds = books.map(book => book._id.toString());
+
+    const result = users.map(user => {
+      const brokenFavorites = user.favorites.filter(favId => !bookIds.includes(favId.toString()));
+
+      return {
+        username: user.username,
+        brokenFavorites: brokenFavorites.map(id => id.toString()),
+      };
+    });
+
+    return result;
+  },
+
   },
   Mutation: {
     createUser: async (_, { username, email, password, role }) => {
@@ -79,13 +131,41 @@ const userResolvers = {
       return {
         token,
         user: {
-          id: user._id,
+          id: user._id.toString(),// Convert ObjectId to a string
           username: user.username,
           email: user.email,
           role: user.role,
         },
       };
     },
+    addFavoriteBook: async (_, { userId, bookId }) => {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      // Convert bookId to ObjectId for comparison (use 'new' keyword)
+      bookId = new mongoose.Types.ObjectId(bookId);  // Use 'new' to instantiate ObjectId
+
+      if (!user.favorites.includes(bookId)) {
+        user.favorites.push(bookId);
+        await user.save();
+      }
+
+      // Return the user with their favorites, ensuring that all fields are properly populated.
+      return {
+        id: user._id.toString(),  // Ensure the user id is returned as a string
+        email: user.email,
+        username: user.username,
+        favorites: await Book.find({ _id: { $in: user.favorites } }).then(favBooks =>
+          favBooks.map(book => ({
+            ...book.toObject(),
+            id: book._id.toString()  // Ensure that the book id is a string
+          }))
+        ),
+      };
+    },
+    
   },
 };
 

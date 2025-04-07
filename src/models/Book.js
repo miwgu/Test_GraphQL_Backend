@@ -9,4 +9,16 @@ const bookSchema = new mongoose.Schema({
   thumbnailUrl: { type: String },
 });
 
-module.exports = mongoose.model("Book", bookSchema);
+// Add this to ensure .toObject() includes a proper string 'id'
+bookSchema.set("toObject", {
+  virtuals: true,
+  transform: (_doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+  }
+});
+
+const Book = mongoose.model("Book", bookSchema);
+
+module.exports = Book;
