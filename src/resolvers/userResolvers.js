@@ -19,7 +19,7 @@ const userResolvers = {
       }
 
       if (user.role !== "ADMIN") {
-        return new Error("Authentication required");
+        return new Error("Access denied. You are not Admin");
       }
 
       return await User.find(); // Fetch all users if role is ADMIN
