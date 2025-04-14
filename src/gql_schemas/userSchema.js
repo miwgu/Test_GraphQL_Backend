@@ -1,4 +1,4 @@
-const { gql } = require("apollo-server");
+const { gql } = require("apollo-server-express");// I use REST with express so I installed this
 
 const userSchema = gql`
 

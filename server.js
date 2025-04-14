@@ -1,21 +1,31 @@
 require('dotenv').config(); // To load the environment variables from .env file!
 
-const { ApolloServer } = require("apollo-server");
+const { ApolloServer } = require("apollo-server-express");
+const express = require('express');
 //const { mergeTypeDefs } = require('@graphql-tools/merge');
 //const { mergeResolvers } = require('@graphql-tools/merge');
-const bookResolvers = require("./src/resolvers/bookResolvers");
-const userResolvers = require("./src/resolvers/userResolvers");
-const bookSchema = require("./src/schemas/bookSchema");
-const userSchema = require("./src/schemas/userSchema");
+const bookResolvers = require("./src/gql_resolvers/bookResolvers");
+const userResolvers = require("./src/gql_resolvers/userResolvers");
+const bookSchema = require("./src/gql_schemas/bookSchema");
+const userSchema = require("./src/gql_schemas/userSchema");
 const authenticateToken = require('./src/auth/auth'); 
 
 const connectDB = require("./src/config/db");
+
+//REST import
+const authRoutes = require('./src/rest/routes/authRoutes');
+const booksRoutes = require('./src/rest/routes/booksRoutes');
+//const usersRoutes = require('./src/rest/routes/usersRoutes');
+
+//Create Express app
+const app = express();
+app.use(express.json())
+
 // Connect to the database
 connectDB();
 
-// Merge schemas and resolvers
-//const typeDefs = mergeTypeDefs([userSchema, bookSchema]);
-//const resolvers = mergeResolvers([userResolvers, bookResolvers]);
+app.use('/rest/auth', authRoutes);
+app.use('/rest/book', booksRoutes);
 
 // Apollo Server Setup
 const server = new ApolloServer({
@@ -49,6 +59,22 @@ const server = new ApolloServer({
   },
 });
 
+/* 
+//This syntax is specific to Apollo Server (not integrated Express)
 server.listen().then(({ url }) => {
   console.log(`Server running at ${url}`);
-});
+}); */
+
+
+async function startServer() {
+  await server.start(); // Required before applying middleware
+  server.applyMiddleware({ app });// Apply Apollo GraphQL middleware to Express app
+
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+    console.log(`📚 REST endpoints start at http://localhost:${PORT}/rest`);
+  });
+}
+
+startServer();

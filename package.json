@@ -11,10 +11,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "apollo-server": "^3.13.0",
+    "apollo-server-express": "^3.13.0",
     "axios": "^1.8.3",
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.7",
+    "express": "^4.21.2",
     "graphql": "^16.10.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.1"
