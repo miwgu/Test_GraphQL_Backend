@@ -48,6 +48,28 @@ const userResolvers = {
 
       //return await User.find(); // Fetch all users if role is ADMIN
     },
+    user: async (_, { id }, { user: currentUser }) => {
+      
+      if (!currentUser) {
+        throw new Error("Authentication required");
+      }
+
+      if (currentUser.role !== "ADMIN") {
+        throw new Error("Access denied. You are not Admin");
+      }
+      
+      const user = await User.findById(id).populate("favorites");;
+      if (!user) {
+        throw new Error("User not found");
+      }
+      return {
+        ...user.toObject(),
+    favorites: user.favorites.map(book => ({
+      ...book.toObject(),
+      id: book._id.toString()
+    }))
+  };
+    },
     me: async (_, __, { user }) => {
       if (!user) {
         throw new Error("Authentication required");

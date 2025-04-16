@@ -15,7 +15,7 @@ const connectDB = require("./src/config/db");
 //REST import
 const authRoutes = require('./src/rest/routes/authRoutes');
 const booksRoutes = require('./src/rest/routes/booksRoutes');
-//const usersRoutes = require('./src/rest/routes/usersRoutes');
+const usersRoutes = require('./src/rest/routes/usersRoutes');
 
 //Create Express app
 const app = express();
@@ -26,6 +26,7 @@ connectDB();
 
 app.use('/rest/auth', authRoutes);
 app.use('/rest/book', booksRoutes);
+app.use('/rest/user', usersRoutes);
 
 // Apollo Server Setup
 const server = new ApolloServer({
