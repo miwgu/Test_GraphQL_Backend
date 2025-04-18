@@ -20,8 +20,29 @@ exports.getAllUsers = async (req, res) => {
     }
   };
 
- // ADD /rest/user/admin/:id   -> 2 routes search user byID and search books byID
- // ADD /rest/user/admin/:id/favorites
+ // ADD /rest/user/admin/byId/:id   -> 2 routes search user byID and search books byID
+ // ADD /rest/user/admin/byId/:id/favorites
+/**
+ * GET /rest/user/admin/byId/:id
+ * Admin only: Get one user ByID
+ */
+exports.getUserById = async (req, res) => {
+    try {
+  
+      const userId = req.params.id;
+      const user = await User.findById(userId).select("username email role favorites");// just IDs for favorite books
+  
+      if (!user) {
+        return res.status(404).json({ error: "User not found." });
+      }
+  
+      res.json(user);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to fetch user data" });
+    }
+  };
+
 
 /**
  * GET /rest/user/admin/byId/:id/favorites
@@ -29,11 +50,6 @@ exports.getAllUsers = async (req, res) => {
  */
 exports.getUserWithFavoritesById = async (req, res) => {
     try {
-      const requester = req.user; // Assumes middleware adds authenticated user to req
-  
-      if (!requester || requester.role !== "ADMIN") {
-        return res.status(403).json({ error: "Access denied. Admins only." });
-      }
   
       const userId = req.params.id;
       const user = await User.findById(userId).populate("favorites");

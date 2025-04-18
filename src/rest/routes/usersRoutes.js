@@ -8,6 +8,7 @@ const ADMIN_PATH = '/admin';
 
 // Admin-only routes
 router.get(`${ADMIN_PATH}/all`, authenticate, isAdmin, usersController.getAllUsers);
+router.get(`${ADMIN_PATH}/byId/:id`, authenticate, isAdmin, usersController.getUserById);
 router.get(`${ADMIN_PATH}/byId/:id/favorites`, authenticate, isAdmin, usersController.getUserWithFavoritesById);
 router.get(`${ADMIN_PATH}/all/with/favorites`, authenticate, isAdmin, usersController.getAllUsersWithFavorites);
 
