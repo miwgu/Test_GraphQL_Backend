@@ -1,10 +1,10 @@
-const {AuthenticatonError} = require ("apollo-server-express");
+const {AuthenticationError} = require ("apollo-server-express");
 
 const  withRole = (resolver, allowedRoles) => {
     return async (parent, args, context , info) => {
         const {user} =context;
         if(!user ||!allowedRoles.includes(user.role)){
-          throw new AuthenticatonError("Unauthorizes");
+          throw new AuthenticationError("Unauthorizes");
                   }
         return resolver (parent, args, context, info);
     };

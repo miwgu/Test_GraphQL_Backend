@@ -2,6 +2,7 @@ require('dotenv').config(); // To load the environment variables from .env file!
 
 const { ApolloServer } = require("apollo-server-express");
 const express = require('express');
+const cors = require('cors');
 //const { mergeTypeDefs } = require('@graphql-tools/merge');
 //const { mergeResolvers } = require('@graphql-tools/merge');
 const bookResolvers = require("./src/gql_resolvers/bookResolvers");
@@ -47,7 +48,7 @@ const server = new ApolloServer({
   context: ({ req }) => {
     const token = req.headers.authorization || "";
     let user = null;
-    
+    console.log("Server.js Token: ", token)
     if(token){
       try{
         user = authenticateToken(token.replace("Bearer ", ""));
@@ -69,7 +70,15 @@ server.listen().then(({ url }) => {
 
 async function startServer() {
   await server.start(); // Required before applying middleware
-  server.applyMiddleware({ app });// Apply Apollo GraphQL middleware to Express app
+  
+  // Allow specific origin and credentials
+  app.use(cors({
+    origin: ['http://localhost:5175', 'https://studio.apollographql.com'],
+    credentials: true
+  }));
+  //server.applyMiddleware({ app });// Apply Apollo GraphQL middleware to Express app
+    // Apply Apollo middleware AFTER CORS is set up
+    server.applyMiddleware({ app, path: '/graphql', cors: false })
 
   const PORT = process.env.PORT || 4000;
   app.listen(PORT, () => {
