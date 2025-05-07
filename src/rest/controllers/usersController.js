@@ -30,7 +30,7 @@ exports.getUserById = async (req, res) => {
     try {
   
       const userId = req.params.id;
-      const user = await User.findById(userId).select("username email role favorites");// just IDs for favorite books
+      const user = await User.findById(userId).select("username email role ");// separation of concerns
   
       if (!user) {
         return res.status(404).json({ error: "User not found." });
@@ -52,7 +52,7 @@ exports.getUserWithFavoritesById = async (req, res) => {
     try {
   
       const userId = req.params.id;
-      const user = await User.findById(userId).populate("favorites");
+      const user = await User.findById(userId).select("_id").populate("favorites");
   
       if (!user) {
         return res.status(404).json({ error: "User not found." });
