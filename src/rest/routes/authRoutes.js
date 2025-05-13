@@ -5,6 +5,9 @@ const bcrypt = require ('bcryptjs');
 const User = require ('../../models/User');
 const generateToken = require ('../../auth/generateToken');
 
+/**
+ * POST /rest/auth/login
+ */
 authRouter.post ('/login', async (req, res) => {
   const {email, password} = req.body;
 

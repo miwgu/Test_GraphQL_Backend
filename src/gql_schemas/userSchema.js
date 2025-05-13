@@ -12,7 +12,7 @@ const userSchema = gql`
    username:String!
    email:String!
    role:Role!
-   favorites:[Book] # Add to show favorites
+   favorites:[Book!] # Add to show favorites
  }
 
    type Book {
@@ -23,6 +23,7 @@ const userSchema = gql`
     category: String
     sensitiveNotes: String
     thumbnailUrl: String
+    likedBy: [User!]
   }
 
  type AuthPayload {

@@ -70,7 +70,7 @@ exports.getUserWithFavoritesById = async (req, res) => {
     }
   };
   
-
+/* Here This API is like GraphQL */
 /**
  * GET /rest/user/admin/all/with/favorites
  * Admin only: Get all users and their favorites
@@ -139,7 +139,7 @@ exports.login = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(401).json({ error: "Invalid password" });
+    if (!isValid) return res.status(401).json({ error: "Autehntication failed" });
 
     const token = generateToken(user);
 
@@ -153,7 +153,7 @@ exports.login = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: "Login failed" });
+    res.status(500).json({ error: "Autehntication failed" });
   }
 };
 

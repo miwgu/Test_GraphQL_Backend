@@ -13,7 +13,8 @@ router.get(`/byId/:id`, authenticate, booksController.getBookById); // Get book 
 
 // Admin-only routes
 router.get(`${ADMIN_PATH}/all`, authenticate, isAdmin, booksController.getBooksForAdmin);
-router.get(`${ADMIN_PATH}/byId/:id`,authenticate, isAdmin, booksController.getBookByIdForAdmin);
+router.get(`${ADMIN_PATH}/byId/:id`,authenticate, isAdmin, booksController.getBookByIdForAdmin);//including sensitiveNotes
+router.get(`${ADMIN_PATH}/byId/:bookId/favorited-by`,authenticate, isAdmin, booksController.getUsersWhoFavoritedBookById);
 router.post(`${ADMIN_PATH}/add`, authenticate, isAdmin, booksController.createBook);
 router.put(`${ADMIN_PATH}/update/:id`,authenticate,  isAdmin, booksController.updateBook);
 router.delete(`${ADMIN_PATH}/delete/:id`,authenticate, isAdmin, booksController.deleteBook);

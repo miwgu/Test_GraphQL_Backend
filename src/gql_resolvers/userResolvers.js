@@ -1,11 +1,16 @@
 const bcrypt = require("bcryptjs");
 const generateToken = require("../auth/generateToken");
 const User = require("../models/User");
-const Book = require("../models/Book"); 
-const mongoose = require('mongoose');
+const Book = require("../models/Book");
+const mongoose = require("mongoose");
+const {
+  ApolloError,
+  AuthenticationError,
+  UserInputError
+} = require('apollo-server-express');
 
 const userResolvers = {
-  User:{
+  User: {
     favorites: async (parent) => {
       // Fetch the books based on the favorites array of the user
       const favoriteBooks = await Book.find({ _id: { $in: parent.favorites } });
@@ -13,13 +18,13 @@ const userResolvers = {
       console.log("Mapped Favorites:", favoriteBooks);
 
       // Convert the ObjectId to a string for GraphQL to handle
-      return favoriteBooks.map(book => {
+      return favoriteBooks.map((book) => {
         return {
-          ...book.toObject(),   // Convert to plain object
-          id: book._id.toString()  // Ensure the id field is returned as string
+          ...book.toObject(), // Convert to plain object
+          id: book._id.toString(), // Ensure the id field is returned as string
         };
       });
-    }   
+    },
   },
   Query: {
     /**
@@ -41,15 +46,14 @@ const userResolvers = {
       }
 
       const users = await User.find().populate("favorites");
-      return users.map(user => ({
+      return users.map((user) => ({
         ...user.toObject(),
-        favorites: user.favorites.map(book => book.toObject())
+        favorites: user.favorites.map((book) => book.toObject()),
       }));
 
       //return await User.find(); // Fetch all users if role is ADMIN
     },
     user: async (_, { id }, { user: currentUser }) => {
-      
       if (!currentUser) {
         throw new Error("Authentication required");
       }
@@ -57,53 +61,68 @@ const userResolvers = {
       if (currentUser.role !== "ADMIN") {
         throw new Error("Access denied. You are not Admin");
       }
-      
-      const user = await User.findById(id).populate("favorites");;
+
+      const user = await User.findById(id).populate("favorites");
       if (!user) {
         throw new Error("User not found");
       }
+
+      const booksWithLikedBy = await Promise.all(
+        user.favorites.map(async (book) => {
+          const likedUsers = await User.find({ favorites: book._id }).select(
+            "username _id"
+          );
+          return {
+            ...book.toObject(),
+            id: book._id.toString(),
+            likedBy: likedUsers.map((u) => ({
+              id: u._id.toString(),
+              username: u.username,
+            })),
+          };
+        })
+      );
+
       return {
         ...user.toObject(),
-    favorites: user.favorites.map(book => ({
-      ...book.toObject(),
-      id: book._id.toString()
-    }))
-  };
+        favorites: booksWithLikedBy,
+      };
     },
     me: async (_, __, { user }) => {
       if (!user) {
         throw new Error("Authentication required");
       }
-      const foundUser = await User.findById(user.id).populate("favorites")
-      
+      const foundUser = await User.findById(user.id).populate("favorites");
+
       return {
         ...foundUser.toObject(),
-        favorites: foundUser.favorites.map(book => ({
+        favorites: foundUser.favorites.map((book) => ({
           ...book.toObject(),
         })),
       };
       //return user; // Return user data from the context
     },
-  /**
-   * check 
-   */
-  checkFavoritesValidity: async () => {
-    const users = await User.find();
-    const books = await Book.find();
-    const bookIds = books.map(book => book._id.toString());
+    /**
+     * check
+     */
+    checkFavoritesValidity: async () => {
+      const users = await User.find();
+      const books = await Book.find();
+      const bookIds = books.map((book) => book._id.toString());
 
-    const result = users.map(user => {
-      const brokenFavorites = user.favorites.filter(favId => !bookIds.includes(favId.toString()));
+      const result = users.map((user) => {
+        const brokenFavorites = user.favorites.filter(
+          (favId) => !bookIds.includes(favId.toString())
+        );
 
-      return {
-        username: user.username,
-        brokenFavorites: brokenFavorites.map(id => id.toString()),
-      };
-    });
+        return {
+          username: user.username,
+          brokenFavorites: brokenFavorites.map((id) => id.toString()),
+        };
+      });
 
-    return result;
-  },
-
+      return result;
+    },
   },
   Mutation: {
     createUser: async (_, { username, email, password, role }) => {
@@ -122,52 +141,56 @@ const userResolvers = {
       return user;
     },
     login: async (_, { email, password }) => {
-      console.log("Received email from GraphQL:", email); // Debugging
+      try {
+        // Find the user by email
+        const user = await User.findOne({ email });
 
-      // Fetch all users from the database
-      const allUsers = await User.find();
-      console.log("All Users in DB:", allUsers); // Debugging
+        if (!user) {
+          console.warn(`Login failed: user not found for email ${email}`);
+          throw new AuthenticationError("User not found"), {
+            code: "UNAUTHENTICATED" 
+          };}
+        // Compare the entered password with the stored hashed password
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log("PasswordValid", isPasswordValid);
 
-      // Find the user by email
-      console.log("Querying database for email:", email);
-      const user = await User.findOne({ email });
+        if (!isPasswordValid) {
+          console.warn(`Login failed: invalid password for email ${email}`);
+          throw new AuthenticationError("Invalid password", {
+            code: "UNAUTHENTICATED" 
+          });
+        }
+        // Generate JWT token
+        const token = generateToken(user);
 
-      console.log("User found:", user); // Debugging
-
-      if (!user) {
-        throw new Error("User not found!");
+        return {
+          token,
+          user: {
+            id: user._id.toString(), // Convert ObjectId to a string
+            username: user.username,
+            email: user.email,
+            role: user.role,
+          },
+        };
+      } catch (error) {
+        console.error("Login error:", error);
+        if (error instanceof ApolloError|| error.name === 'ApolloError') {
+          // If it's an Apollo classified error, throw it as is
+          throw error;
+        }
+    
+        // ApolloError is returned for unexpected internal errors
+        throw new ApolloError("Internal server error", "INTERNAL_SERVER_ERROR");
       }
-
-      // Compare the entered password with the stored hashed password
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      console.log("PasswordValid", isPasswordValid);
-
-      if (!isPasswordValid) {
-        throw new Error("Invalid password!");
-      }
-
-      // Generate JWT token
-      const token = generateToken(user);
-      console.log("Token", token);
-
-      return {
-        token,
-        user: {
-          id: user._id.toString(),// Convert ObjectId to a string
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        },
-      };
     },
     addFavoriteBook: async (_, { userId, bookId }) => {
       const user = await User.findById(userId);
       if (!user) {
-        throw new Error("User not found");
+        throw new Error("User not found!");
       }
 
       // Convert bookId to ObjectId for comparison (use 'new' keyword)
-      bookId = new mongoose.Types.ObjectId(bookId);  // Use 'new' to instantiate ObjectId
+      bookId = new mongoose.Types.ObjectId(bookId); // Use 'new' to instantiate ObjectId
 
       if (!user.favorites.includes(bookId)) {
         user.favorites.push(bookId);
@@ -176,18 +199,18 @@ const userResolvers = {
 
       // Return the user with their favorites, ensuring that all fields are properly populated.
       return {
-        id: user._id.toString(),  // Ensure the user id is returned as a string
+        id: user._id.toString(), // Ensure the user id is returned as a string
         email: user.email,
         username: user.username,
-        favorites: await Book.find({ _id: { $in: user.favorites } }).then(favBooks =>
-          favBooks.map(book => ({
-            ...book.toObject(),
-            id: book._id.toString()  // Ensure that the book id is a string
-          }))
+        favorites: await Book.find({ _id: { $in: user.favorites } }).then(
+          (favBooks) =>
+            favBooks.map((book) => ({
+              ...book.toObject(),
+              id: book._id.toString(), // Ensure that the book id is a string
+            }))
         ),
       };
     },
-    
   },
 };
 

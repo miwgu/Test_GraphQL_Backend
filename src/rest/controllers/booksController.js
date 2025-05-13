@@ -1,4 +1,6 @@
 const Book = require("../../models/Book");
+const User = require("../../models/User");
+const mongoose = require("mongoose");
 
 /**
  * GET /rest/book/admin/all
@@ -61,6 +63,28 @@ exports.getBookById = async (req, res) => {
     
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch book" });
+  }
+};
+
+/**
+ * GET /rest/book/admin/:bookId/favorited-by
+ * Get all users who have this book in their favorites
+ */
+exports.getUsersWhoFavoritedBookById = async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    console.log("Requested bookId:", bookId);
+
+    if (!mongoose.Types.ObjectId.isValid(bookId)) {
+      return res.status(400).json({ error: "Invalid book ID format" });
+    }
+
+    const users = await User.find({ favorites: bookId }).select("username email role");
+
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch users for the book" });
   }
 };
 
