@@ -9,6 +9,15 @@ const mongoose = require("mongoose");
 exports.getBooksForAdmin = async (req, res) => {
   try {
 
+    const forceRefresh = req.query.forceRefresh === 'true';
+
+    //Allow caching by default, but disable it when forceRefresh is enabled
+    if (forceRefresh) {
+      res.set('Cache-Control', 'no-store');
+    } else {
+      res.set('Cache-Control', 'public, max-age=60');
+    }
+
       const books = await Book.find();
       return res.json(books);
     

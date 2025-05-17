@@ -37,9 +37,9 @@ extend type Query {
 
    updateBook(
      id: ID!
-     title: String!
-     author: String!
-     isbn: String!
+     title: String
+     author: String
+     isbn: String
      category: String
      sensitiveNotes: String
      thumbnailUrl: String
