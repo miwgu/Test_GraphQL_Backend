@@ -13,3 +13,8 @@
 - GraphQL is great for flexible data fetching but requires careful caching and permission handling.  
 - REST is more straightforward and easier to cache, but may lead to over-fetching.  
 
+![Alt text](images/DatacontrollbetweenGraphQL_REST.jpg)
+
+## How to start
+npm install   nodemon server.js
+
