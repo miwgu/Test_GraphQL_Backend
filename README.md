@@ -13,7 +13,35 @@
 - GraphQL is great for flexible data fetching but requires careful caching and permission handling.  
 - REST is more straightforward and easier to cache, but may lead to over-fetching.  
 
-![Alt text](images/DatacontrollbetweenGraphQL_REST.jpg)
+## 4.2.1 Client-side Data Control
+
+This section illustrates the difference between REST and GraphQL in terms of client-side data fetching in a book management application.
+
+### REST
+- Requires multiple separate API requests to fetch different resources:
+  1. Get all attributes for a specific user (`GET rest/user/admin/byId/:id`)
+  2. Get all favorite books of that user (`GET rest/user/admin/byId/:id/favorites`)
+  3. For each book, get all users who favorited it (`GET rest/book/admin/byId/:bookid/favorited-by`)
+- Issues:
+  - **Under-fetching**: a single request does not provide all necessary data
+  - **Over-fetching**: responses may include unnecessary data (e.g., image URLs), impacting performance, especially on mobile networks
+
+### GraphQL
+- Allows a single request to specify exactly what data is needed:
+  - User ID and username
+  - Favorite books’ ID, title, and author
+  - IDs and usernames of other users who favorited the same books
+- Benefits:
+  - Efficient and minimal data transfer
+  - Better control for the client
+  - Avoids unnecessary data and improves performance in bandwidth-constrained environments
+
+### Summary
+- REST: multiple requests per resource → over-fetching and under-fetching possible
+- GraphQL: single flexible request → precise data retrieval and improved client-side control
+
+![Client-side Data Control](images/DatacontrollbetweenGraphQL_REST.jpg)
+*Figure 1: Example of client-side data fetching using REST vs GraphQL*
 
 ## How to start
 npm install   nodemon server.js
