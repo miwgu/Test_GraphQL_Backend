@@ -53,7 +53,7 @@ Follow these steps to set up and run the frontend application with GraphQL and A
 
 Create a `.env` file in the project root with the following content:
 ```bash
-MONGODB_URI = mongodb+srv://admin:admin@xxx.cthggtl.mongodb.net/BookDB?retryWrites=true&w=majority&appName=XX
+MONGODB_URI = XXX
 JWT_SECRET = XXX
 NODE_ENV = production # or development
 ```
@@ -70,3 +70,4 @@ NODE_ENV = production # or development
 npm install   nodemon server.js
 
 ```
+
