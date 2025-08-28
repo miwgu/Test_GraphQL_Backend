@@ -44,5 +44,29 @@ This section illustrates the difference between REST and GraphQL in terms of cli
 *Figure 1: Example of client-side data fetching using REST vs GraphQL*
 
 ## How to start
+
+Follow these steps to set up and run the frontend application with GraphQL and Apollo Client:
+
+---
+
+### 1. Set up Environment Variables
+
+Create a `.env` file in the project root with the following content:
+```bash
+MONGODB_URI = mongodb+srv://admin:admin@xxx.cthggtl.mongodb.net/BookDB?retryWrites=true&w=majority&appName=XX
+JWT_SECRET = XXX
+NODE_ENV = production # or development
+```
+- **MONGODB_URI**: MongoDB connection string  
+- **JWT_SECRET**: Secret key used for JWT authentication  
+- **NODE_ENV**: `production` or `development` environment  
+
+> **Note:** Replace `XXX` with your actual credentials. Never commit secrets to GitHub.
+
+---
+
+### 2. Install Dependencies
+```bash
 npm install   nodemon server.js
 
+```
